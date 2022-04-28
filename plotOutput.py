@@ -20,14 +20,47 @@ def get_file(filename):
 			scores.append(float(gdata[2]))
 			generations_num+=1
 
-	return [np.array(tranzistors), np.array(losses), np.array(scores), np.array(range(generations_num))]
-	
-gates = get_file("test_1badder.v_aig_0.5_5.0_10.0_2.0_1.0_1_500.0_0.0_none_50.0")
-aig   = get_file("test_1badder.v_aig_0.25_5.0_10.0_2.0_1.0_1_500.0_0.0_none_50.0")
-mig   = get_file("test_1badder.v_aig_0.75_5.0_10.0_2.0_1.0_1_500.0_0.0_none_50.0")
+	return {
+		"tranzistors": tranzistors, 
+		"losses":      losses, 
+		"scores":      scores,
+		"generations": range(generations_num)
+	}
 
-plt.step(gates[3], gates[2], label = "gates")
-plt.plot(gates[3], mig[2], label = "mig")
-plt.plot(gates[3], aig[2], label = "aig")
+def get_plot(plt, filename, times, label):
+	tranzistors = []
+	losses = []
+	scores = []
+	generations = []	
+	for time in range(times):
+		tmp = get_file(filename + "_" + str(time))
+		tranzistors.append(tmp["tranzistors"])
+		losses.append(tmp["losses"])
+		scores.append(tmp["scores"])
+
+	l_min = min([len(i) for i in tranzistors])
+	
+	generations = np.array(range(l_min))
+
+	for time in range(times):
+		tranzistors[time] = tranzistors[time][:l_min]
+		losses[time]      = losses[time][:l_min]
+		scores[time]      = scores[time][:l_min]
+
+	tranzistors = np.array(tranzistors, dtype=float)
+	losses      = np.array(losses,      dtype=float)
+	scores      = np.array(scores,      dtype=float)
+
+	#plt.fill_between(generations, np.amin(tranzistors, axis=0), np.amax(tranzistors, axis=0), alpha=.5, linewidth=0)
+	#plt.fill_between(generations, np.amin(losses, axis=0), np.amax(losses, axis=0), alpha=.5, linewidth=0)
+	#plt.fill_between(generations, np.amin(scores, axis=0), np.amax(scores, axis=0), alpha=.5, linewidth=0)
+	plt.plot(generations, np.mean(losses, axis=0), label=label)
+	
+
+
+get_plot(plt, "test_4badder.v_aig_0.25_9_10_10_5_1_300_10_1_1", 5, "aig")
+get_plot(plt, "test_4badder.v_aig_0.25_9_10_10_5_1_300_0_1_1", 5, "mig")
+get_plot(plt, "test_4badder.v_gates_0.25_9_10_10_5_1_300_10_1_1", 5, "gates")
 plt.legend()
-plt.show()
+#plt.show()
+plt.savefig("test.pdf", format="pdf")
